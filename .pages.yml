@@ -1,0 +1,46 @@
+media:
+  input: "dist"
+  output: "/"
+  extensions: ["jpg","jpeg","png","webp","avif"]
+content:
+  - name: "services"
+    label: "중개 서비스"
+    type: "collection"
+    path: "content/services"
+    format: "json"
+    filename: "{year}-{month}-{day}-{hour}-{minute}-{second}-{primary}.json"
+    view: {"primary":"title","fields":["title","order"],"sort":"order","order":"asc"}
+    fields:
+      - {"name":"title","label":"서비스명","type":"string","required":true}
+      - {"name":"audience","label":"이런 분께","type":"text","required":true}
+      - {"name":"check","label":"함께 확인","type":"text","required":true}
+      - {"name":"prepare","label":"상담 준비","type":"text","required":true}
+      - {"name":"order","label":"표시 순서 (작은 숫자부터)","type":"number","required":true}
+  - name: "insights"
+    label: "상권 인사이트"
+    type: "collection"
+    path: "content/insights"
+    format: "json"
+    filename: "{year}-{month}-{day}-{hour}-{minute}-{second}-{primary}.json"
+    view: {"primary":"title","fields":["title","order"],"sort":"order","order":"asc"}
+    fields:
+      - {"name":"title","label":"글 제목","type":"string","required":true}
+      - {"name":"body","label":"본문","type":"text","required":true}
+      - {"name":"image","label":"대표 사진","type":"image","required":false}
+      - {"name":"alt","label":"사진 설명","type":"string","required":false}
+      - {"name":"order","label":"표시 순서 (작은 숫자부터)","type":"number","required":true}
+  - name: "projects"
+    label: "매물·중개 사례"
+    type: "collection"
+    path: "content/projects"
+    format: "json"
+    filename: "{year}-{month}-{day}-{hour}-{minute}-{second}-{primary}.json"
+    view: {"primary":"title","fields":["title","order"],"sort":"order","order":"asc"}
+    fields:
+      - {"name":"title","label":"사례 제목","type":"string","required":true}
+      - {"name":"category","label":"상담 분야 (서비스명과 동일하게)","type":"string","required":true}
+      - {"name":"body","label":"사례 본문","type":"text","required":true}
+      - {"name":"image","label":"매물 사진","type":"image","required":false}
+      - {"name":"caption","label":"사진 캡션","type":"string","required":false}
+      - {"name":"poster","label":"포스터 이미지","type":"image","required":false}
+      - {"name":"order","label":"표시 순서 (작은 숫자부터)","type":"number","required":true}
