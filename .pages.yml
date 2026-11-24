@@ -24,6 +24,9 @@ content:
     filename: "{year}-{month}-{day}-{hour}-{minute}-{second}-{primary}.json"
     view: {"primary":"title","fields":["title","order"],"sort":"order","order":"asc"}
     fields:
+      - {"name":"category","label":"게시판 (market / faq / news)","type":"string","required":false}
+      - {"name":"published","label":"게시일","type":"date","required":false}
+      - {"name":"source","label":"NEWS 원문 주소 (https://)","type":"string","required":false}
       - {"name":"title","label":"글 제목","type":"string","required":true}
       - {"name":"body","label":"본문","type":"text","required":true}
       - {"name":"image","label":"대표 사진","type":"image","required":false}

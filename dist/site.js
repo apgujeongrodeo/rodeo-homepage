@@ -50,3 +50,12 @@ if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: re
   observer.observe(section);
  });
 }
+const boardDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+document.querySelectorAll('.board-post time').forEach(time => {
+ const days = (Date.parse(boardDate) - Date.parse(time.dateTime)) / 86400000;
+ const badge = time.parentElement.querySelector('.board-new') ?? document.createElement('b');
+ badge.className = 'board-new';
+ badge.textContent = 'NEW';
+ if (days >= 0 && days <= 7) time.after(badge);
+ else badge.remove();
+});

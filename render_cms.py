@@ -1,6 +1,7 @@
 import html,json,re
 from collections import defaultdict
 from pathlib import Path
+from datetime import datetime, date, timedelta, timezone
 from urllib.parse import urlencode
 ROOT=Path(__file__).resolve().parent
 def esc(value):
@@ -25,7 +26,30 @@ def picture(row):
 def inquiry(category):
     return esc('/contact/?'+urlencode({'service': category}))
 def insight(row):
-    return f'<details><summary>{esc(row["title"])}</summary><div class="reading">{picture(row)}{paragraphs(row["body"])}</div></details>'
+    published = row.get("published")
+    meta = ""
+    if published:
+        stamp = date.fromisoformat(published[:10])
+        today = datetime.now(timezone(timedelta(hours=9))).date()
+        badge = '<b class="board-new">NEW</b>' if 0 <= (today-stamp).days <= 7 else ''
+        meta = f'<time datetime="{stamp}">{stamp:%Y.%m.%d}</time>{badge}'
+    source = row.get("source", "")
+    source_link = f'<p><a href="{esc(source)}">원문 보기</a></p>' if re.fullmatch(r'https://[^\s]+', source) else ""
+    return (f'<details class="board-post"><summary><span>{esc(row["title"])}</span>{meta}</summary>'
+            f'<div class="reading">{picture(row)}{paragraphs(row["body"])}{source_link}</div></details>')
+
+def insight_board(rows):
+    sections = []
+    categories = (("market", "로데오 상권 노트"), ("faq", "자주 묻는 질문"), ("news", "부동산 NEWS"))
+    for key, label in categories:
+        posts = [row for row in rows if row.get("category", "market") == key]
+        posts.sort(key=lambda row: row.get("published") or "", reverse=True)
+        body = "".join(map(insight, posts))
+        if not body:
+            body = '<p class="board-empty">등록된 소식이 없습니다.</p>'
+        sections.append(f'<section class="board-section" id="{key}"><h2>{label}</h2>{body}</section>')
+    return "".join(sections)
+
 def service(row):
     title=esc(row['title'])
     return (f'<article class="detail-card"><h2>{title}</h2>'
@@ -83,7 +107,8 @@ history_path=ROOT/'dist/about/index.html'
 updates={history_path:render_section(history_path.read_text(encoding='utf8'),render_history(read_rows('deal-history')))}
 for name, renderer, rows in [('services',service,services),('insights',insight,read_rows('insights')),('projects',project,read_rows('projects'))]:
     path=ROOT/'dist'/name/'index.html'
-    updates[path]=render_section(path.read_text(encoding='utf8'),'\n'+ '\n'.join(map(renderer,rows))+'\n')
+    markup = insight_board(rows) if name == "insights" else "\n".join(map(renderer, rows))
+    updates[path]=render_section(path.read_text(encoding='utf8'), "\n"+markup+"\n")
 for name in ('index.html','contact/index.html'):
     path=ROOT/'dist'/name
     source=path.read_text(encoding='utf8')
