@@ -2,7 +2,7 @@ import html,json,re
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, date, timedelta, timezone
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 ROOT=Path(__file__).resolve().parent
 def esc(value):
     return html.escape(str(value),quote=True)
@@ -53,6 +53,34 @@ def insight_board(rows):
 def faq_board(rows):
     posts = [row for row in rows if row.get("category") == "faq"]
     return '<section class="board-section" id="faq"><h2>자주 묻는 질문</h2>' + "".join(map(insight, posts)) + '</section>'
+
+def question_intake():
+    config = ROOT / "content" / "qa-settings.json"
+    url = json.loads(config.read_text(encoding="utf-8-sig")).get("formUrl", "").strip()
+    if not url:
+        return ""
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.netloc != "docs.google.com" or not re.fullmatch(r"/forms/d/e/[A-Za-z0-9_-]+/viewform", parts.path):
+        raise ValueError("Use the published Google Forms responder URL")
+    address = esc("https://docs.google.com" + parts.path)
+    return (f'<details class="qa-intake"><summary>로그인 없이 질문하기</summary>'
+            f'<p>공개를 원하지 않는 내용이나 연락처는 카카오톡 상담을 이용해 주세요.</p>'
+            f'<iframe title="로데오 고객 질문 접수" loading="lazy" src="{address}?embedded=true"></iframe>'
+            f'<a href="{address}">질문 양식을 새 페이지에서 열기</a></details>')
+
+def reviewed_questions():
+    groups = []
+    for row in sorted(read_rows("reviewed-questions"), key=lambda row: row["published"], reverse=True):
+        posted = date.fromisoformat(row["published"][:10])
+        groups.append(f'<details class="board-post"><summary><span>{esc(row["title"])}</span>'
+                      f'<time datetime="{posted}">{posted:%Y.%m.%d}</time><span class="board-replies">답변 완료</span></summary>'
+                      f'<div class="reading">{paragraphs(row["question"])}<h3>로데오 답변</h3>{paragraphs(row["answer"])}</div></details>')
+    if not groups:
+        return '<p class="board-empty">아직 공개된 답변이 없습니다.</p>'
+    visible = "".join(groups[:10])
+    if len(groups) > 10:
+        visible += '<details><summary>이전 질문 더 보기</summary>' + "".join(groups[10:]) + '</details>'
+    return visible
 
 def public_questions():
     snapshot = ROOT / "questions_snapshot.json"
@@ -136,6 +164,11 @@ for name, renderer, rows in [('services',service,services),('insights',insight,r
         markup = '<p class="board-empty">공개할 계약 사례와 고객 인터뷰를 준비 중입니다.</p>'
     source = render_section(path.read_text(encoding='utf8'), "\n"+markup+"\n")
     if name == "qa":
+        intake = question_intake()
+        source = re.sub(r'(<!-- intake:start -->).*?(<!-- intake:end -->)',
+                        lambda match: match[1]+intake+match[2], source, flags=re.S)
+        source = re.sub(r'(<!-- reviewed:start -->).*?(<!-- reviewed:end -->)',
+                        lambda match: match[1]+reviewed_questions()+match[2], source, flags=re.S)
         source = re.sub(r'(<!-- questions:start -->).*?(<!-- questions:end -->)',
                         lambda match: match[1]+public_questions()+match[2], source, flags=re.S)
     updates[path] = source

@@ -79,3 +79,22 @@ content:
       - {"name":"area","label":"공개 지역 (예: 압구정로데오 일대)","type":"string","required":true}
       - {"name":"publicName","label":"공개 허락받은 상호명 (선택)","type":"string","required":false}
       - {"name":"publicAddress","label":"공개 허락받은 주소 (선택)","type":"string","required":false}
+  - name: "qa-settings"
+    label: "Q&A 접수 설정"
+    type: "file"
+    path: "content/qa-settings.json"
+    format: "json"
+    fields:
+      - {name: "formUrl", label: "공개 Google 설문지 응답 링크", type: "string"}
+  - name: "reviewed-questions"
+    label: "공개 Q&A 답변"
+    type: "collection"
+    path: "content/reviewed-questions"
+    format: "json"
+    filename: "{year}-{month}-{day}-{hour}-{minute}-{second}-{primary}.json"
+    view: {primary: "title", fields: ["title", "published"], sort: "published", order: "desc"}
+    fields:
+      - {name: "title", label: "공개 제목", type: "string", required: true}
+      - {name: "published", label: "게시일", type: "date", required: true}
+      - {name: "question", label: "공개 질문 내용 (개인정보 제외)", type: "text", required: true}
+      - {name: "answer", label: "로데오 답변", type: "text", required: true}
