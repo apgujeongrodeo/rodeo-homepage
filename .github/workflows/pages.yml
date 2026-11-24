@@ -1,0 +1,39 @@
+name: Publish Rodeo Homepage
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 render_cms.py
+      - name: Set repository site base path
+        env:
+          BASE: /${{ github.event.repository.name }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          base = os.environ["BASE"]
+          for path in Path("dist").rglob("*.html"):
+              source = path.read_text(encoding="utf-8")
+              source = re.sub(r'((?:href|src|action)="/)(?!/)', lambda match: match[1][:-1] + base + "/", source)
+              path.write_text(source, encoding="utf-8")
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        id: deployment
