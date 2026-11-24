@@ -42,3 +42,19 @@ nav a[aria-current=page]:not(.btn){color:var(--wine);text-decoration:underline;t
 .board-post summary::after{content:"+";color:var(--wine);font-size:16px}.board-post[open] summary::after{content:"−"}
 .public-questions{list-style:none;margin:0 0 20px;padding:0}.public-questions li{display:flex;gap:8px 16px;align-items:baseline;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--line)}.public-questions a{font-weight:700;flex:1 1 14rem}.board-replies{font-size:13px;color:#554842}.public-questions a:hover{text-decoration:underline}@media(min-width:821px) and (max-width:1180px){.bar nav{gap:8px;font-size:11px}.bar nav .btn{padding:7px 9px}}
 .qa-intake iframe{border:0;width:100%;height:640px;background:#fff}.qa-intake p{margin:12px 0}.qa-intake a{text-decoration:underline}
+.qa-compose{max-width:960px;margin:3rem auto;padding:clamp(1.25rem,5vw,3rem);background:#fbf8f3;border:1px solid #e8dfd2;border-radius:18px}
+.qa-compose-heading,.qa-compose dialog>div{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.qa-compose h2,.qa-compose-heading p{margin:0}
+.qa-compose form{display:grid;gap:1.3rem;margin-top:1.7rem}
+.qa-fields{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.qa-compose label{display:grid;gap:.5rem;font-weight:600}
+.qa-compose label span{display:inline;color:#811321}
+.qa-compose input,.qa-compose select,.qa-compose textarea{font:inherit;font-weight:400;color:inherit;background:transparent;border:0;border-bottom:1px solid #897363;border-radius:0;padding:.65rem .25rem;width:100%;box-sizing:border-box}
+.qa-compose textarea{resize:vertical}
+.qa-note{font-size:.9rem;margin:0}
+.qa-compose button{font:inherit;font-weight:700;border:0;border-radius:99px;padding:.85rem 1.5rem;background:#811321;color:white;cursor:pointer}
+.qa-compose dialog{width:min(650px,90vw);border:1px solid #e8dfd2;border-radius:16px;background:#fbf8f3;padding:1rem}
+.qa-compose dialog::backdrop{background:#22150e88}
+.qa-compose iframe{width:100%;height:min(380px,55vh);border:0}
+.qa-board-head{display:grid;grid-template-columns:1fr auto auto;gap:2rem;padding:1rem 0;border-top:2px solid #35271d;border-bottom:1px solid #d9cbbb;color:#705746;font-size:.9rem}
+@media(max-width:540px){.qa-fields{grid-template-columns:1fr}.qa-board-head{gap:.6rem}}

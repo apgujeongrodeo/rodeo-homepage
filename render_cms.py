@@ -63,20 +63,34 @@ def question_intake():
     if parts.scheme != "https" or parts.netloc != "docs.google.com" or not re.fullmatch(r"/forms/d/e/[A-Za-z0-9_-]+/viewform", parts.path):
         raise ValueError("Use the published Google Forms responder URL")
     address = esc("https://docs.google.com" + parts.path)
-    return (f'<details class="qa-intake"><summary>로그인 없이 질문하기</summary>'
-            f'<p>공개를 원하지 않는 내용이나 연락처는 카카오톡 상담을 이용해 주세요.</p>'
-            f'<iframe title="로데오 고객 질문 접수" loading="lazy" src="{address}?embedded=true"></iframe>'
-            f'<a href="{address}">질문 양식을 새 페이지에서 열기</a></details>')
+    action = address.removesuffix("/viewform") + "/formResponse?embedded=true"
+    return f"""<section class="qa-compose" id="ask">
+    <div class="qa-compose-heading"><h2>질문하기</h2><p>로그인 없이 질문을 남길 수 있어요.</p></div>
+    <form action="{action}" method="post" target="rodeo-qa-receipt" id="qa-form">
+    <div class="qa-fields"><label>분야<select id="qa-category"><option>로데오 상권</option><option>상가·사무실</option><option>병의원 개원</option><option>계약·재계약</option><option>기타</option></select></label>
+    <label>공개 설정<select id="qa-visibility"><option>검토 후 공개 가능</option><option>비공개 요청</option></select></label></div>
+    <label>제목 <span aria-hidden="true">*</span><input required maxlength="120" name="entry.761894970" placeholder="예: 로데오에서 1층 소품숍 자리를 찾고 있어요"></label>
+    <label>내용 <span aria-hidden="true">*</span><textarea id="qa-body" required maxlength="2000" rows="5" placeholder="궁금한 점을 자유롭게 적어 주세요."></textarea></label>
+    <input type="hidden" name="entry.1933928968" id="qa-payload">
+    <p class="qa-note">연락처와 계약서 정보는 적지 말아 주세요. 개별 답변이 필요하면 <a href="https://open.kakao.com/o/se3nXtYi">카카오톡 상담</a>을 이용해 주세요.</p>
+    <button type="submit" disabled>질문 올리기</button>
+    <noscript><a href="{address}">질문 접수 양식 열기</a></noscript>
+    </form>
+    <dialog id="qa-receipt"><div><h3>접수 결과</h3><button type="button" aria-label="접수 결과 닫기">닫기</button></div><iframe name="rodeo-qa-receipt" title="질문 접수 결과"></iframe></dialog>
+    <script src="/qa/intake.js" defer></script></section>"""
+
 
 def reviewed_questions():
     groups = []
+    today = datetime.now(timezone(timedelta(hours=9))).date()
     for row in sorted(read_rows("reviewed-questions"), key=lambda row: row["published"], reverse=True):
         posted = date.fromisoformat(row["published"][:10])
-        groups.append(f'<details class="board-post"><summary><span>{esc(row["title"])}</span>'
+        badge = ' <b class="board-new">NEW</b>' if 0 <= (today-posted).days <= 7 else ""
+        groups.append(f'<details class="board-post"><summary><span>{esc(row["title"])}{badge}</span>'
                       f'<time datetime="{posted}">{posted:%Y.%m.%d}</time><span class="board-replies">답변 완료</span></summary>'
                       f'<div class="reading">{paragraphs(row["question"])}<h3>로데오 답변</h3>{paragraphs(row["answer"])}</div></details>')
     if not groups:
-        return '<p class="board-empty">아직 공개된 답변이 없습니다.</p>'
+        return '<p class="board-empty">아직 공개된 질문이 없습니다. 접수된 질문은 운영자가 확인한 뒤 게시합니다.</p>'
     visible = "".join(groups[:10])
     if len(groups) > 10:
         visible += '<details><summary>이전 질문 더 보기</summary>' + "".join(groups[10:]) + '</details>'
