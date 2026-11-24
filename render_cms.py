@@ -40,7 +40,7 @@ def insight(row):
 
 def insight_board(rows):
     sections = []
-    categories = (("market", "로데오 상권 노트"), ("faq", "자주 묻는 질문"), ("news", "부동산 NEWS"))
+    categories = (("market", "로데오 상권 노트"), ("news", "부동산 NEWS"))
     for key, label in categories:
         posts = [row for row in rows if row.get("category", "market") == key]
         posts.sort(key=lambda row: row.get("published") or "", reverse=True)
@@ -50,6 +50,28 @@ def insight_board(rows):
         sections.append(f'<section class="board-section" id="{key}"><h2>{label}</h2>{body}</section>')
     return "".join(sections)
 
+def faq_board(rows):
+    posts = [row for row in rows if row.get("category") == "faq"]
+    return '<section class="board-section" id="faq"><h2>자주 묻는 질문</h2>' + "".join(map(insight, posts)) + '</section>'
+
+def public_questions():
+    snapshot = ROOT / "questions_snapshot.json"
+    if not snapshot.exists():
+        return '<p class="board-empty">최신 질문은 더 보기에서 확인할 수 있습니다.</p>'
+    rows = json.loads(snapshot.read_text(encoding="utf8"))[:10]
+    if not rows:
+        return '<p class="board-empty">아직 공개 질문이 없습니다.</p>'
+    posts = []
+    for row in rows:
+        url = row["url"]
+        if not re.fullmatch(r"https://github\.com/apgujeongrodeo/rodeo-homepage/discussions/[0-9]+", url):
+            continue
+        stamp = datetime.fromisoformat(row["createdAt"].replace("Z", "+00:00")).astimezone(timezone(timedelta(hours=9))).date()
+        posts.append(f'<li class="board-post"><a href="{esc(url)}">{esc(row["title"])}</a> '
+                     f'<time datetime="{stamp}">{stamp:%Y.%m.%d}</time> '
+                     f'<span class="board-replies">댓글 {int(row["comments"]["totalCount"])}</span></li>')
+    return '<ul class="public-questions">' + "".join(posts) + '</ul>'
+
 def service(row):
     title=esc(row['title'])
     return (f'<article class="detail-card"><h2>{title}</h2>'
@@ -57,12 +79,12 @@ def service(row):
             f'<p><strong>함께 확인</strong> {esc(row["check"])}</p>'
             f'<p><strong>상담 준비</strong> {esc(row["prepare"])}</p>'
             f'<a class="btn" href="{inquiry(row["title"])}">{title} 문의</a></article>')
-def project(row):
+def project(row, listing=False):
     poster=asset(row.get('poster'))
     button=f'<a class="btn alt" href="{poster}" target="_blank" rel="noopener">기존 매물 포스터 열기</a>' if poster else ''
     return (f'<article class="split detail-card">{picture(row)}<div><h2>{esc(row["title"])}</h2>'
             f'{paragraphs(row["body"])}<div class="actions">{button}'
-            f'<a class="btn" href="{inquiry(row["category"])}">비슷한 조건 상담하기</a></div></div></article>')
+            f'<a class="btn" href="{inquiry(row["category"])}">{("이 매물 상담하기" if listing else "비슷한 조건 상담하기")}</a></div></div></article>')
 def read_rows(name):
     records=[(p.name,json.loads(p.read_text(encoding='utf-8-sig'))) for p in (ROOT/'content'/name).glob('*.json')]
     return [row for _,row in sorted(records,key=lambda item:(item[1].get('order') or 0,item[0]))]
@@ -105,10 +127,18 @@ if len({r['title'] for r in services})!=len(services):
     raise ValueError('Service titles must be unique')
 history_path=ROOT/'dist/about/index.html'
 updates={history_path:render_section(history_path.read_text(encoding='utf8'),render_history(read_rows('deal-history')))}
-for name, renderer, rows in [('services',service,services),('insights',insight,read_rows('insights')),('projects',project,read_rows('projects'))]:
+for name, renderer, rows in [('services',service,services),('insights',insight,read_rows('insights')),('projects',project,read_rows('projects')),('listings',lambda row: project(row, listing=True),read_rows('listings')),('qa',insight,read_rows('insights'))]:
     path=ROOT/'dist'/name/'index.html'
     markup = insight_board(rows) if name == "insights" else "\n".join(map(renderer, rows))
-    updates[path]=render_section(path.read_text(encoding='utf8'), "\n"+markup+"\n")
+    if name == "qa":
+        markup = faq_board(rows)
+    if name == "projects" and not rows:
+        markup = '<p class="board-empty">공개할 계약 사례와 고객 인터뷰를 준비 중입니다.</p>'
+    source = render_section(path.read_text(encoding='utf8'), "\n"+markup+"\n")
+    if name == "qa":
+        source = re.sub(r'(<!-- questions:start -->).*?(<!-- questions:end -->)',
+                        lambda match: match[1]+public_questions()+match[2], source, flags=re.S)
+    updates[path] = source
 for name in ('index.html','contact/index.html'):
     path=ROOT/'dist'/name
     source=path.read_text(encoding='utf8')

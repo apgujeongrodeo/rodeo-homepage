@@ -3,9 +3,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  discussion:
+    types: [created, edited, deleted, category_changed]
+  discussion_comment:
+    types: [created, deleted]
 permissions:
   contents: read
   actions: read
+  discussions: read
   pages: write
   id-token: write
 concurrency:
@@ -19,6 +24,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Read public Q&A
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api graphql -f 'query=query { repository(owner:"apgujeongrodeo",name:"rodeo-homepage") { discussions(first:10,categoryId:"DIC_kwDOV5h_LM4DL18a",orderBy:{field:CREATED_AT,direction:DESC}) { nodes { title url createdAt comments { totalCount } } } } }' --jq '.data.repository.discussions.nodes' > questions_snapshot.tmp; then
+            mv questions_snapshot.tmp questions_snapshot.json
+          fi
       - run: python3 render_cms.py
       - name: Set repository site base path
         env:
