@@ -44,3 +44,20 @@ content:
       - {"name":"caption","label":"사진 캡션","type":"string","required":false}
       - {"name":"poster","label":"포스터 이미지","type":"image","required":false}
       - {"name":"order","label":"표시 순서 (작은 숫자부터)","type":"number","required":true}
+  - name: "deal-history"
+    label: "공개 중개 실적"
+    type: "collection"
+    path: "content/deal-history"
+    format: "json"
+    filename: "{year}-{month}-{day}-{hour}-{minute}-{second}-{primary}.json"
+    view: {"primary":"title","fields":["title","year","month"],"sort":"year","order":"desc"}
+    fields:
+      - {"name":"title","label":"사례 제목 (공개용)","type":"string","required":true}
+      - {"name":"year","label":"체결 연도","type":"number","required":true}
+      - {"name":"month","label":"체결 월 (1–12)","type":"number","required":true}
+      - {"name":"transaction","label":"거래 구분 (매매 / 임대 / 재계약 등)","type":"string","required":true}
+      - {"name":"use","label":"공간 유형 (상가 / 사무실 / 병의원 등)","type":"string","required":true}
+      - {"name":"industry","label":"업종 (뷰티 / 패션 / F&B 등)","type":"string","required":true}
+      - {"name":"area","label":"공개 지역 (예: 압구정로데오 일대)","type":"string","required":true}
+      - {"name":"publicName","label":"공개 허락받은 상호명 (선택)","type":"string","required":false}
+      - {"name":"publicAddress","label":"공개 허락받은 주소 (선택)","type":"string","required":false}
